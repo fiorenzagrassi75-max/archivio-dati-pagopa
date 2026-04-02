@@ -2,23 +2,27 @@ name: Prelievo Mensile Dati pagoPA
 
 on:
   schedule:
-    # Scatta alle 10:00 del primo giorno di ogni mese
-    - cron: '0 0 1 * *'
-  workflow_dispatch: # Questo ti permette di farlo partire a mano quando vuoi
+    - cron: '0 10 1 * *' # Ogni 1° del mese alle 10:00 UTC
+  workflow_dispatch: 
 
 jobs:
   scarica_dati:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout del repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Scarica tutta la cronologia per evitare conflitti
 
       - name: Scarica il JSON
         run: |
-          curl "https://pdnd-prod-dl-1-public-data.s3.eu-central-1.amazonaws.com/dashboard/pagopa/dashboard-pagopa.json" -o dati-mensili.json
+          curl -L "https://pdnd-prod-dl-1-public-data.s3.eu-central-1.amazonaws.com/dashboard/pagopa/dashboard-pagopa.json" -o dati-mensili.json
 
       - name: Salva il file nel repository
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Aggiornamento dati pagoPA - ${{ github.event.schedule }}"
+          commit_message: "Aggiornamento dati pagoPA"
           file_pattern: 'dati-mensili.json'
+          push_options: '--force' # Risolve l'errore "rejected" dello screenshot
